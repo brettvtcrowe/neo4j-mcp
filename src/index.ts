@@ -69,7 +69,8 @@ export default class MyMcpWorker extends WorkerEntrypoint<MyEnv> {
    * The required fetch() method — Cloudflare calls this for every request.
    * ProxyToSelf automatically wires up MCP transport over HTTP/SSE.
    */
-  async fetch(request: Request): Promise<Response> {
+  async fetch(request: Request, env: MyEnv, ctx: ExecutionContext): Promise<Response> {
+    this.env = env; // <-- ensures env is defined for ProxyToSelf
     return new ProxyToSelf(this).fetch(request);
   }
 }
