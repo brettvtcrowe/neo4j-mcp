@@ -1,4 +1,8 @@
-name = "neo4j-mcp"
-main = "main.ts"
-compatibility_date = "2025-01-31"
+name = "my-mcp-worker"
+main = "src/index.ts"
+compatibility_date = "2025-10-06"
 
+[vars]
+NEO4J_URL = "neo4j+s://afad0685.databases.neo4j.io"
+NEO4J_USER = "neo4j"
+NEO4J_PASSWORD = "6x2IgVpeu04UqcOGPo3YEE2P8H01ROYppjPvzjjvuIU"
