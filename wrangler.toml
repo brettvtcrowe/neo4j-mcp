@@ -1,4 +1,4 @@
-name = "my-mcp-worker"
+name = "neo4j-mcp"
 main = "src/index.ts"
 compatibility_date = "2025-10-06"
 
