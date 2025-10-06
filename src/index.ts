@@ -1,48 +1,75 @@
+// src/index.ts
+
+// These imports come from the Cloudflare Workers runtime and the workers-mcp helper.
+// Both will be available once you run:
+//   npm install workers-mcp
+//   npm install --save-dev @cloudflare/workers-types
 import { WorkerEntrypoint } from 'cloudflare:workers';
 import { ProxyToSelf } from 'workers-mcp';
 
-type Env = {
-  NEO4J_URL: string;      // e.g. https://<host>/db/<db>/query/v2  (HTTP Query API)
+// -----------------------------------------------------------------------------
+// Define what environment variables exist (matches wrangler.toml [vars])
+// -----------------------------------------------------------------------------
+interface MyEnv {
+  NEO4J_URL: string;
   NEO4J_USER: string;
-  NEO4J_PASSWORD: string; // set with `wrangler secret put NEO4J_PASSWORD`
-};
+  NEO4J_PASSWORD: string;
+}
 
-export default class MyMcpWorker extends WorkerEntrypoint<Env> {
+// -----------------------------------------------------------------------------
+// Main Worker class — this is your MCP server entrypoint
+// -----------------------------------------------------------------------------
+export default class MyMcpWorker extends WorkerEntrypoint<MyEnv> {
+  // Explicitly declare env so TypeScript recognizes it
+  env!: MyEnv;
+
   /**
-   * @mcp.tool
-   * Get a greeting (example MCP tool)
+   * Example MCP tool: a simple greeting to verify the server is responding.
    */
   async sayHello(name: string) {
-    return `Hello, ${name}!`;
+    return `Hello, ${name}! Your Cloudflare MCP server is live.`;
   }
 
   /**
-   * @mcp.tool
-   * Run a Cypher query (safe example)
+   * Example MCP tool: execute a Cypher query via Neo4j's HTTP Query API v2.
+   * Make sure your NEO4J_URL points to: https://<host>/db/<database>/query/v2
    */
-  async runCypher({ cypher, params = {} }: { cypher: string; params?: Record<string, unknown> }) {
-    // Query API v2 request body
+  async runCypher({
+    cypher,
+    params = {},
+  }: {
+    cypher: string;
+    params?: Record<string, unknown>;
+  }) {
     const body = {
-      statements: [{ statement: cypher, parameters: params }]
+      statements: [{ statement: cypher, parameters: params }],
     };
 
+    // Basic auth using your Neo4j credentials
     const auth = btoa(`${this.env.NEO4J_USER}:${this.env.NEO4J_PASSWORD}`);
+
     const res = await fetch(this.env.NEO4J_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json', // or 'application/vnd.neo4j.jolt-v2'
-        'Authorization': `Basic ${auth}`
+        Accept: 'application/json',
+        Authorization: `Basic ${auth}`,
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     });
 
-    if (!res.ok) throw new Error(`Neo4j HTTP error ${res.status}`);
+    if (!res.ok) {
+      throw new Error(`Neo4j error ${res.status}: ${await res.text()}`);
+    }
+
     return await res.json();
   }
 
-  // MCP over HTTP/S entrypoint
-  async fetch(req: Request): Promise<Response> {
-    return new ProxyToSelf(this).fetch(req); // handles Streamable HTTP/SSE transport
+  /**
+   * The required fetch() method — Cloudflare calls this for every request.
+   * ProxyToSelf automatically wires up MCP transport over HTTP/SSE.
+   */
+  async fetch(request: Request): Promise<Response> {
+    return new ProxyToSelf(this).fetch(request);
   }
 }
