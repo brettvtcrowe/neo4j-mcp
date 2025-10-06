@@ -1,3 +1,4 @@
-name = "mcp-neo4j"
-main = "src/index.ts"
+name = "neo4j-mcp"
+main = "main.ts"
 compatibility_date = "2025-01-31"
+
