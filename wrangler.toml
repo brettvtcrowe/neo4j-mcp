@@ -1,6 +1,10 @@
-name = "my-mcp-worker"
+name = "neo4j-mcp"
 main = "src/index.ts"
 compatibility_date = "2025-10-06"
+
+# wrangler.toml (wrangler v3.88.0^)
+[observability.logs]
+enabled = true
 
 [vars]
 NEO4J_URL = "neo4j+s://afad0685.databases.neo4j.io"
